@@ -12,10 +12,14 @@ from ryu.lib.packet import packet
 from ryu.lib.packet import ethernet
 
 # Simple Match Class
+
+
 class SimpleMatch(object):
     pass
 
 # Build a Ryu App
+
+
 class Hw9Switch(app_manager.RyuApp):
 
     def __init__(self, *args, **kwargs):
@@ -24,7 +28,7 @@ class Hw9Switch(app_manager.RyuApp):
         # Read arguments from the config file
         CONF = cfg.CONF
         CONF.register_opts([
-            cfg.StrOpt('routing_alg', default=None, help = ('TODO')),
+            cfg.StrOpt('routing_alg', default=None, help=('TODO')),
         ])
         self.routing_alg = CONF.routing_alg
 
@@ -75,16 +79,17 @@ class Hw9Switch(app_manager.RyuApp):
         out = ofp_parser.OFPPacketOut(
             datapath=dp, buffer_id=ofp.OFP_NO_BUFFER, in_port=msg.in_port,
             actions=actions, data=msg.data)
-        #TODO is it better to use the dp.send_packet_out() instead?
+        # TODO is it better to use the dp.send_packet_out() instead?
         dp.send_msg(out)
 
     def get_topology_data(self):
         switch_list = get_switch(self, None)
-        #XXX: Useful for getting familiar with the data structures
-        #self.logger.info(switch_list[0].to_dict())
-        switches=[switch.dp.id for switch in switch_list]
+        # XXX: Useful for getting familiar with the data structures
+        # self.logger.info(switch_list[0].to_dict())
+        switches = [switch.dp.id for switch in switch_list]
         link_list = get_link(self, None)
-        links=[(link.src.dpid,link.dst.dpid,{'port':link.src.port_no}) for link in link_list]
+        links = [(link.src.dpid, link.dst.dpid, {
+                  'port': link.src.port_no}) for link in link_list]
 
         # Uncomment to look at the topology
         #self.logger.info('switches: {}, links: {}'.format(switches, links))
@@ -99,7 +104,7 @@ class Hw9Switch(app_manager.RyuApp):
         switch_list, edge_list = graph
 
         #
-        #HW9TODO: Build a spanning tree, and save it as some data structure
+        # HW9TODO: Build a spanning tree, and save it as some data structure
         # that you can use later in broadcst_st
         #
 
@@ -120,7 +125,7 @@ class Hw9Switch(app_manager.RyuApp):
         ofp = dp.ofproto
         ofp_parser = dp.ofproto_parser
 
-        # This will show you that the switch is connecting via OpenFlow v1.0.  
+        # This will show you that the switch is connecting via OpenFlow v1.0.
         # See ryu/ryu/ofproto/ofproto_v1_0.py for more information.
         #self.logger.info(ofp, ofp.OFP_VERSION)
 
@@ -129,29 +134,29 @@ class Hw9Switch(app_manager.RyuApp):
         # is not in the spanning tree on the appropriate ports
         always_skip_ports = [msg.in_port, ofp.OFPP_LOCAL]
         #
-        #HW9TODO: Add in the ports that are not in the spanning tree for this
+        # HW9TODO: Add in the ports that are not in the spanning tree for this
         # switch
         #
-        spanning_tree_skip_ports = [] #TODO
+        spanning_tree_skip_ports = []  # TODO
         skip_port_set = set(always_skip_ports + spanning_tree_skip_ports)
 
         # For every port not being skipped, send the packet out that port.
-        #Note: it is crucially important to flood out the ports that an
+        # Note: it is crucially important to flood out the ports that an
         # end-host is connected to
-        #Note: When the packet is buffered at the switch, buffer_id can only be
+        # Note: When the packet is buffered at the switch, buffer_id can only be
         # used once.  Because of this, we use the packet data in the PacketIn.
-        #Note: However, it is not requried for switches to include the entire
+        # Note: However, it is not requried for switches to include the entire
         # packet as data, so even this simple function is not guaranteed to be
         # correct. OFPC could be used to ensure correctness, but that is
         # outside the scope of this homework.
         for portno, port in dp.ports.iteritems():
-            assert(portno == port.port_no) # Sanity checking
+            assert(portno == port.port_no)  # Sanity checking
             if portno not in skip_port_set:
                 self.output_packet_port(msg, dp, portno)
 
     def install_path(self, path, src, dst):
-        # Log 
-        self.logger.info("Installing path") 
+        # Log
+        self.logger.info("Installing path")
 
         for dpid, in_port, out_port in path:
             sw = get_switch(self, dpid)[0]
@@ -161,7 +166,7 @@ class Hw9Switch(app_manager.RyuApp):
 
             # Build the match
             match = ofp_parser.OFPMatch(in_port=in_port,
-                dl_dst=haddr_to_bin(dst), dl_src=haddr_to_bin(src))
+                                        dl_dst=haddr_to_bin(dst), dl_src=haddr_to_bin(src))
 
             # Build the actions
             actions = [ofp_parser.OFPActionOutput(out_port)]
@@ -178,13 +183,13 @@ class Hw9Switch(app_manager.RyuApp):
 
     def find_path(self, src_dpid, src_port, dst_dpid, dst_port):
         self.logger.info("Finding path {}.p{} -> {}.p{}".format(src_dpid, src_port,
-            dst_dpid, dst_port))
+                                                                dst_dpid, dst_port))
 
         #
-        #HW9TODO: Write a general purpose algorithm to find a path in the graph.
+        # HW9TODO: Write a general purpose algorithm to find a path in the graph.
         #
 
-        #HW9 Note: As an example, the below code installs all "trivial" paths
+        # HW9 Note: As an example, the below code installs all "trivial" paths
         # where the source and destination share the same switch. You need to
         # write an algorithm that searches the topology to find a path.
         if src_dpid == dst_dpid:
@@ -215,7 +220,8 @@ class Hw9Switch(app_manager.RyuApp):
         self.mac_to_swport[src] = (src_dpid, src_port)
 
         # DEBUG
-        self.logger.info("packet in %s %s %s %s", src_dpid, src, dst, msg.in_port)
+        self.logger.info("packet in %s %s %s %s",
+                         src_dpid, src, dst, msg.in_port)
 
         # Fall back on STP Broadcast if we have not seen the destination yet
         if dst not in self.mac_to_swport:
@@ -242,7 +248,8 @@ class Hw9Switch(app_manager.RyuApp):
 
         # Output the packet directly to the destination because it will not use
         # the newly installed rule
-        self.output_packet_port(msg, get_switch(self, dst_dpid)[0].dp, dst_port)
+        self.output_packet_port(msg, get_switch(
+            self, dst_dpid)[0].dp, dst_port)
 
     @set_ev_cls(ofp_event.EventOFPPacketIn, MAIN_DISPATCHER)
     def packet_in_handler(self, ev):
@@ -258,4 +265,3 @@ class Hw9Switch(app_manager.RyuApp):
 
         # Dispatch to the different routing algorithms
         self.routing_func(ev)
-
