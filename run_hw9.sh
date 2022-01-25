@@ -17,4 +17,4 @@ config=$1
 # necessary to make running and grading the student code possible.  Assumes
 # that this is being run from the VM and that the student's code is checked out
 # in the /home/ryu/ directory.
-sudo ryu-manager --verbose --observe-links --config-file $config /home/ryu/ryu/ryu/topology/switches.py /home/ryu/ryu/ryu/app/ofctl_rest.py /home/ryu/ryu/ryu/app/rest.py /home/ryu/cs450-net-hw9-*/hw9.py
+sudo ryu-manager --verbose --observe-links --config-file $config /home/ryu/ryu/ryu/topology/switches.py /home/ryu/ryu/ryu/app/ofctl_rest.py /home/ryu/ryu/ryu/app/rest.py /home/ryu/CN-PRJ2/hw9.py
