@@ -133,6 +133,7 @@ class Hw9Switch(app_manager.RyuApp):
                 if visited[i[0]] == False:
                     queue.append(i[0])
                     in_use_ports[s].add(i[1]['port'])
+                    in_use_ports = self.update_in_use_ports(i[0], s, in_use_ports, links)
                     visited[i[0]] = True
     
         self.logger.info('in use ports:\n {}'.format(in_use_ports))
@@ -140,6 +141,13 @@ class Hw9Switch(app_manager.RyuApp):
        
         # Save the spanning tree for use with all future broadcasts
         self.spanning_tree = in_use_ports
+
+    def update_in_use_ports(self, src, dst, in_use_ports, links):
+        for link in links:
+            if (link[0], link[1]) == (src, dst):
+                in_use_ports[src].add(link[2]['port'])
+                break
+        return in_use_ports
         
 
     def get_all_ports(self, dpid):
