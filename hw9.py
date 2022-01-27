@@ -250,7 +250,9 @@ class Hw9Switch(app_manager.RyuApp):
 
         else:
             adj_list = self.generate_graph_adj_list()
-            parents = {i:None for i in switches}
+            for key, val in adj_list.items():
+                self.logger.info('{} : {}'.format(key, val))
+            parents = {i:None for i in adj_list.keys()}
             queue = [src_dpid]
             while queue:
                 u = queue.pop(0)
@@ -277,7 +279,7 @@ class Hw9Switch(app_manager.RyuApp):
                 
         adj_list = {i:[] for i in switches}
         for link in links:
-            adj_list[link[0]] = link[1:]
+            adj_list[link[0]].append(link[1:])
         
         return adj_list
 
