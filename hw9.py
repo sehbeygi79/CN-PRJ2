@@ -115,7 +115,7 @@ class Hw9Switch(app_manager.RyuApp):
 
         # BFS
         adj_list = {i:[] for i in switches}
-        in_use_ports = {i:[] for i in switches}
+        in_use_ports = {i:set() for i in switches}
         for edge in links:
             adj_list[edge[0]].append(edge[1:])
 
@@ -132,7 +132,7 @@ class Hw9Switch(app_manager.RyuApp):
             for i in adj_list[s]:
                 if visited[i[0]] == False:
                     queue.append(i[0])
-                    in_use_ports[s].append(i[1]['port'])
+                    in_use_ports[s].add(i[1]['port'])
                     visited[i[0]] = True
     
         self.logger.info('in use ports:\n {}'.format(in_use_ports))
@@ -140,17 +140,18 @@ class Hw9Switch(app_manager.RyuApp):
        
         # Save the spanning tree for use with all future broadcasts
         self.spanning_tree = in_use_ports
-       
+        
+
     def get_all_ports(self, dpid):
        
         link_list = get_link(self, None)
         links = [(link.src.dpid, link.dst.dpid, {
                   'port': link.src.port_no}) for link in link_list]
         
-        all_ports = []
+        all_ports = set()
         for edge in links:
             if edge[0] == dpid:
-                all_ports.append(edge[2]['port'])
+                all_ports.add(edge[2]['port'])
         
         return all_ports
 
@@ -183,13 +184,13 @@ class Hw9Switch(app_manager.RyuApp):
         # switch
         #
         #self.logger.info('I\'m switch{}'.format(dp.id))
-        all_ports = self.get_all_ports(dp.id)
-        self.logger.info('all ports for switch{} is {}'.format(dp.id, all_ports))
+        #all_ports = self.get_all_ports(dp.id) 
 
         
-        spanning_tree_skip_ports = []  # TODO
-        skip_port_set = set(always_skip_ports + spanning_tree_skip_ports)
-
+        spanning_tree_skip_ports = self.get_all_ports(dp.id) - self.spanning_tree[dp.id]
+        skip_port_set = set(always_skip_ports).union(spanning_tree_skip_ports)
+        
+        self.logger.info('spanning tree skipped ports for switch{} is {}'.format(dp.id, spanning_tree_skip_ports))
         # For every port not being skipped, send the packet out that port.
         # Note: it is crucially important to flood out the ports that an
         # end-host is connected to
