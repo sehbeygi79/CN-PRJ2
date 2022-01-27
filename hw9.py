@@ -140,7 +140,20 @@ class Hw9Switch(app_manager.RyuApp):
        
         # Save the spanning tree for use with all future broadcasts
         self.spanning_tree = in_use_ports
-        exit()
+       
+    def get_all_ports(self, dpid):
+       
+        link_list = get_link(self, None)
+        links = [(link.src.dpid, link.dst.dpid, {
+                  'port': link.src.port_no}) for link in link_list]
+        
+        all_ports = []
+        for edge in links:
+            if edge[0] == dpid:
+                all_ports.append(edge[2]['port'])
+        
+        return all_ports
+
 
     def broadcast_stp(self, ev):
         self.logger.info('Broadcast STP:')
@@ -169,6 +182,11 @@ class Hw9Switch(app_manager.RyuApp):
         # HW9TODO: Add in the ports that are not in the spanning tree for this
         # switch
         #
+        #self.logger.info('I\'m switch{}'.format(dp.id))
+        all_ports = self.get_all_ports(dp.id)
+        self.logger.info('all ports for switch{} is {}'.format(dp.id, all_ports))
+
+        
         spanning_tree_skip_ports = []  # TODO
         skip_port_set = set(always_skip_ports + spanning_tree_skip_ports)
 
