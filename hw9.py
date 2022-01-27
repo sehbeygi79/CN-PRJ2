@@ -149,7 +149,6 @@ class Hw9Switch(app_manager.RyuApp):
                 break
         return in_use_ports
         
-
     def get_all_ports(self, dpid):
        
         link_list = get_link(self, None)
@@ -162,7 +161,6 @@ class Hw9Switch(app_manager.RyuApp):
                 all_ports.add(edge[2]['port'])
         
         return all_ports
-
 
     def broadcast_stp(self, ev):
         self.logger.info('Broadcast STP:')
@@ -244,20 +242,61 @@ class Hw9Switch(app_manager.RyuApp):
         self.logger.info("Finding path {}.p{} -> {}.p{}".format(src_dpid, src_port,
                                                                 dst_dpid, dst_port))
 
-        #
-        # HW9TODO: Write a general purpose algorithm to find a path in the graph.
-        #
-
         # HW9 Note: As an example, the below code installs all "trivial" paths
         # where the source and destination share the same switch. You need to
         # write an algorithm that searches the topology to find a path.
         if src_dpid == dst_dpid:
             path = [(src_dpid, src_port, dst_port)]
+
         else:
-            path = None
+            adj_list = self.generate_graph_adj_list()
+            parents = {i:None for i in switches}
+            queue = [src_dpid]
+            while queue:
+                u = queue.pop(0)
+
+                if u == dst_dpid:
+                    break
+
+                for v, ports in adj_list[u]:
+                    if parents[v] == None:
+                        queue.append(v)
+                        parents[v] = (u, ports)
+
+            path = self.generate_path_steps(src_dpid, src_port, dst_dpid, dst_port, parents)
 
         return path
 
+    def generate_graph_adj_list(self):
+        switch_list, edge_list = self.get_topology_data()
+        
+        switches = [switch.dp.id for switch in switch_list]
+        links = [(link.src.dpid, link.dst.dpid, {
+                  'src_port': link.src.port_no,
+                  'dst_port': link.dst.port_no}) for link in edge_list]
+                
+        adj_list = {i:[] for i in switches}
+        for link in links:
+            adj_list[link[0]] = link[1:]
+        
+        return adj_list
+
+    def generate_path_steps(self, src, src_port, dst, dst_port, parents):
+        path = []
+        child = dst
+        parent_port_out = dst_port
+        
+        while child != src:
+            parent, ports = parents[child]
+            child_port_in = ports['dst_port']
+            path.append((child, child_port_in, parent_port_out))
+            parent_port_out = ports['src_port']
+            child = parent
+
+        path.append((src, src_port, parent_port_out))
+        path.reverse()
+        return path
+        
     def per_flow(self, ev):
         self.logger.info('Per-Flow:')
 
