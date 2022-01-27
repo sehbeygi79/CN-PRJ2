@@ -48,6 +48,7 @@ class Hw9Switch(app_manager.RyuApp):
         # End-host MAC and Location learning.  This is necessary because the
         # MAC addresses of end-hosts aren't known until they send a packet.
         self.mac_to_swport = {}
+        self.adj_list = None
 
     def noop(self, ev):
         self.logger.info('NOOP:')
@@ -249,10 +250,13 @@ class Hw9Switch(app_manager.RyuApp):
             path = [(src_dpid, src_port, dst_port)]
 
         else:
-            adj_list = self.generate_graph_adj_list()
-            for key, val in adj_list.items():
-                self.logger.info('{} : {}'.format(key, val))
-            parents = {i:None for i in adj_list.keys()}
+            if self.adj_list == None:
+                self.adj_list = self.generate_graph_adj_list()
+
+            # for key, val in self.adj_list.items():
+            #     self.logger.info('{} : {}'.format(key, val))
+
+            parents = {i:None for i in self.adj_list.keys()}
             queue = [src_dpid]
             while queue:
                 u = queue.pop(0)
@@ -260,12 +264,13 @@ class Hw9Switch(app_manager.RyuApp):
                 if u == dst_dpid:
                     break
 
-                for v, ports in adj_list[u]:
+                for v, ports in self.adj_list[u]:
                     if parents[v] == None:
                         queue.append(v)
                         parents[v] = (u, ports)
 
             path = self.generate_path_steps(src_dpid, src_port, dst_dpid, dst_port, parents)
+            self.logger.info('Path found: {}'.format(path))
 
         return path
 
