@@ -89,7 +89,8 @@ class FatTree(Topo):
         for x in xrange(0, self.iAggLayerSwitch, end):
             for i in xrange(0, end):
                 for j in xrange(0, end):
-                    linkopts = dict(bw=bw_c2a)
+                    linkopts = dict()
+                    linkopts['bw'] = bw_c2a
                     self.addLink(
                         self.CoreSwitchList[i*end+j],
                         self.AggSwitchList[x+i],
@@ -99,7 +100,9 @@ class FatTree(Topo):
         for x in xrange(0, self.iAggLayerSwitch, end):
             for i in xrange(0, end):
                 for j in xrange(0, end):
-                    linkopts = dict(bw=bw_a2e)
+                    linkopts = dict()
+                    linkopts['bw'] = bw_a2e
+
                     self.addLink(
                         self.AggSwitchList[x+i], self.EdgeSwitchList[x+j],
                         **linkopts)
@@ -107,7 +110,8 @@ class FatTree(Topo):
         logger.debug("Add link Edge to Host.")
         for x in xrange(0, self.iEdgeLayerSwitch):
             for i in xrange(0, self.density):
-                linkopts = dict(bw=bw_h2a)
+                linkopts = dict()
+                linkopts['bw'] = bw_h2a
                 self.addLink(
                     self.EdgeSwitchList[x],
                     self.HostList[self.density * x + i],
