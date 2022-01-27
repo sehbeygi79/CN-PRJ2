@@ -83,16 +83,20 @@ class Hw9Switch(app_manager.RyuApp):
         dp.send_msg(out)
 
     def get_topology_data(self):
+        self.logger.info('tag1')
         switch_list = get_switch(self, None)
+        self.logger.info('tag2')
         # XXX: Useful for getting familiar with the data structures
         # self.logger.info(switch_list[0].to_dict())
         switches = [switch.dp.id for switch in switch_list]
+        self.logger.info('tag3')
         link_list = get_link(self, None)
+        self.logger.info('tag4')
         links = [(link.src.dpid, link.dst.dpid, {
                   'port': link.src.port_no}) for link in link_list]
 
         # Uncomment to look at the topology
-        #self.logger.info('switches: {}, links: {}'.format(switches, links))
+        self.logger.info('switches: {}, links: {}'.format(switches, links))
 
         # A Graph = (V, E) = (switch_list, link_list)
         return (switch_list, link_list)
@@ -102,21 +106,48 @@ class Hw9Switch(app_manager.RyuApp):
         # spanning tree and then broadcasting over it
         graph = self.get_topology_data()
         switch_list, edge_list = graph
+        
+        # ADDED
+        switches = [switch.dp.id for switch in switch_list]
+        links = [(link.src.dpid, link.dst.dpid, {
+                  'port': link.src.port_no}) for link in edge_list]
+        # self.logger.info('graph: {}'.format(graph))
 
-        #
-        # HW9TODO: Build a spanning tree, and save it as some data structure
-        # that you can use later in broadcst_st
-        #
+        # BFS
+        adj_list = {i:[] for i in switches}
+        in_use_ports = {i:[] for i in switches}
+        for edge in links:
+            adj_list[edge[0]].append(edge[1:])
 
+
+        # now adj_list is ready
+        visited = [False] * (max(adj_list) + 1)
+        queue = []
+        queue.append(switches[0])
+        visited[switches[0]] = True
+
+        while queue:
+            s = queue.pop(0)
+
+            for i in adj_list[s]:
+                if visited[i[0]] == False:
+                    queue.append(i[0])
+                    in_use_ports[s].append(i[1]['port'])
+                    visited[i[0]] = True
+    
+        self.logger.info('in use ports:\n {}'.format(in_use_ports))
+        # BFS 
+       
         # Save the spanning tree for use with all future broadcasts
-        # self.spanning_tree = None
-        pass
+        self.spanning_tree = in_use_ports
+        exit()
 
     def broadcast_stp(self, ev):
         self.logger.info('Broadcast STP:')
 
         # Build the spanning tree if this is the first time getting here
         if self.spanning_tree == None:
+            self.logger.info('inside if')
             self.build_spanning_tree()
 
         # Get handles
@@ -133,6 +164,7 @@ class Hw9Switch(app_manager.RyuApp):
         # includes the switch's local port, the input port, and any port that
         # is not in the spanning tree on the appropriate ports
         always_skip_ports = [msg.in_port, ofp.OFPP_LOCAL]
+        self.logger.info('always_skip_ports: {}'.format(always_skip_ports))
         #
         # HW9TODO: Add in the ports that are not in the spanning tree for this
         # switch
