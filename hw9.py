@@ -84,20 +84,20 @@ class Hw9Switch(app_manager.RyuApp):
         dp.send_msg(out)
 
     def get_topology_data(self):
-        self.logger.info('tag1')
+        #self.logger.info('tag1')
         switch_list = get_switch(self, None)
-        self.logger.info('tag2')
+        #self.logger.info('tag2')
         # XXX: Useful for getting familiar with the data structures
         # self.logger.info(switch_list[0].to_dict())
         switches = [switch.dp.id for switch in switch_list]
-        self.logger.info('tag3')
+        #self.logger.info('tag3')
         link_list = get_link(self, None)
-        self.logger.info('tag4')
+        #self.logger.info('tag4')
         links = [(link.src.dpid, link.dst.dpid, {
                   'port': link.src.port_no}) for link in link_list]
 
         # Uncomment to look at the topology
-        self.logger.info('switches: {}, links: {}'.format(switches, links))
+        #self.logger.info('switches: {}, links: {}'.format(switches, links))
 
         # A Graph = (V, E) = (switch_list, link_list)
         return (switch_list, link_list)
@@ -137,7 +137,7 @@ class Hw9Switch(app_manager.RyuApp):
                     in_use_ports = self.update_in_use_ports(i[0], s, in_use_ports, links)
                     visited[i[0]] = True
     
-        self.logger.info('in use ports:\n {}'.format(in_use_ports))
+        #self.logger.info('in use ports:\n {}'.format(in_use_ports))
         # BFS 
        
         # Save the spanning tree for use with all future broadcasts
@@ -168,7 +168,6 @@ class Hw9Switch(app_manager.RyuApp):
 
         # Build the spanning tree if this is the first time getting here
         if self.spanning_tree == None:
-            self.logger.info('inside if')
             self.build_spanning_tree()
 
         # Get handles
@@ -185,7 +184,7 @@ class Hw9Switch(app_manager.RyuApp):
         # includes the switch's local port, the input port, and any port that
         # is not in the spanning tree on the appropriate ports
         always_skip_ports = [msg.in_port, ofp.OFPP_LOCAL]
-        self.logger.info('always_skip_ports: {}'.format(always_skip_ports))
+        #self.logger.info('always_skip_ports: {}'.format(always_skip_ports))
         #
         # HW9TODO: Add in the ports that are not in the spanning tree for this
         # switch
@@ -197,7 +196,8 @@ class Hw9Switch(app_manager.RyuApp):
         spanning_tree_skip_ports = self.get_all_ports(dp.id) - self.spanning_tree[dp.id]
         skip_port_set = set(always_skip_ports).union(spanning_tree_skip_ports)
         
-        self.logger.info('spanning tree skipped ports for switch{} is {}'.format(dp.id, spanning_tree_skip_ports))
+        #self.logger.info('spanning tree skipped ports for switch{} is {}'.format(dp.id, spanning_tree_skip_ports))
+        self.logger.info('skip port set for switch{} is {}'.format(dp.id, skip_port_set))
         # For every port not being skipped, send the packet out that port.
         # Note: it is crucially important to flood out the ports that an
         # end-host is connected to
@@ -322,7 +322,9 @@ class Hw9Switch(app_manager.RyuApp):
         # until the end-host sends a packet
         src_dpid = dp.id
         src_port = msg.in_port
-        self.mac_to_swport[src] = (src_dpid, src_port)
+        self.logger.info('mac2port: {}'.format(self.mac_to_swport))
+        if src not in self.mac_to_swport:
+            self.mac_to_swport[src] = (src_dpid, src_port)
 
         # DEBUG
         self.logger.info("packet in %s %s %s %s",
