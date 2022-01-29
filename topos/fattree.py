@@ -11,6 +11,7 @@ https://cseweb.ucsd.edu/~vahdat/papers/portland-sigcomm09.pdf
 from mininet.topo import Topo
 from mininet.util import irange
 
+
 class FatTreeTopo(Topo):
     "Full Bisection Bandwidth FatTree Topology"
 
@@ -32,17 +33,23 @@ class FatTreeTopo(Topo):
         num_edge_per_pod = k / 2
         hosts_per_sw = k / 2
         num_sws = num_core + num_agg + num_edge
-        
+
         # Debug
         print('Create a fattree topology with {} switches'.format(num_sws))
 
         # Init all switches
-        cores = [self.addSwitch('core%02d' % x) for x in range(num_core)]
-        pods = [([self.addSwitch('p%02da%02d' % (podnum, aggnum)) \
-                for aggnum in range(num_agg_per_pod)], \
-               [self.addSwitch('p%02de%02d' % (podnum, edgenum)) \
-                for edgenum in range(num_edge_per_pod)]) \
-               for podnum in range(num_pods)]
+        cores = [self.addSwitch('core%02d' % x, dpid='{}'.format(x+1))
+                 for x in range(num_core)]
+        pods = [([self.addSwitch('p%02da%02d' % (podnum, aggnum), dpid='{}'.format(
+            num_core+1 + podnum*(num_agg_per_pod+num_edge_per_pod) + aggnum
+        ))
+            for aggnum in range(num_agg_per_pod)],
+            [self.addSwitch('p%02de%02d' % (podnum, edgenum), dpid='{}'.format(
+                num_core+1 + podnum *
+                (num_agg_per_pod+num_edge_per_pod) + num_agg_per_pod + edgenum
+            ))
+            for edgenum in range(num_edge_per_pod)])
+            for podnum in range(num_pods)]
 
         # Add hosts to switches
         pods_cpy = pods[:]
@@ -69,7 +76,7 @@ class FatTreeTopo(Topo):
             agg, edge = pod
             for agg_i in range(num_agg_per_pod):
                 a = agg[agg_i]
-                for core_i in range(k / 2): # k/2 == num_core/num_agg_per_pod
+                for core_i in range(k / 2):  # k/2 == num_core/num_agg_per_pod
                     c = cores[core_i + (agg_i * k / 2)]
                     self.addLink(a, c)
 
