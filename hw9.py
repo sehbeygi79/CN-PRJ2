@@ -49,6 +49,7 @@ class Hw9Switch(app_manager.RyuApp):
         # MAC addresses of end-hosts aren't known until they send a packet.
         self.mac_to_swport = {}
         self.adj_list = None
+        self.all_ports = {}
 
     def noop(self, ev):
         self.logger.info('NOOP:')
@@ -190,10 +191,13 @@ class Hw9Switch(app_manager.RyuApp):
         # switch
         #
         #self.logger.info('I\'m switch{}'.format(dp.id))
-        #all_ports = self.get_all_ports(dp.id) 
+        #all_ports = self.get_all_ports(dp.id)
+
+        if dp.id not in self.all_ports:
+            self.all_ports[dp.id] = self.get_all_ports(dp.id)
 
         
-        spanning_tree_skip_ports = self.get_all_ports(dp.id) - self.spanning_tree[dp.id]
+        spanning_tree_skip_ports = self.all_ports[dp.id] - self.spanning_tree[dp.id]
         skip_port_set = set(always_skip_ports).union(spanning_tree_skip_ports)
         
         #self.logger.info('spanning tree skipped ports for switch{} is {}'.format(dp.id, spanning_tree_skip_ports))
@@ -256,7 +260,7 @@ class Hw9Switch(app_manager.RyuApp):
             # for key, val in self.adj_list.items():
             #     self.logger.info('{} : {}'.format(key, val))
 
-            parents = {i:None for i in self.adj_list.keys()}
+            parents = {i:None for i in self.adj_list}
             queue = [src_dpid]
             while queue:
                 u = queue.pop(0)
