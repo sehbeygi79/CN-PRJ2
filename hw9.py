@@ -201,7 +201,7 @@ class Hw9Switch(app_manager.RyuApp):
         skip_port_set = set(always_skip_ports).union(spanning_tree_skip_ports)
         
         #self.logger.info('spanning tree skipped ports for switch{} is {}'.format(dp.id, spanning_tree_skip_ports))
-        self.logger.info('skip port set for switch{} is {}'.format(dp.id, skip_port_set))
+        # self.logger.info('skip port set for switch{} is {}'.format(dp.id, skip_port_set))
         # For every port not being skipped, send the packet out that port.
         # Note: it is crucially important to flood out the ports that an
         # end-host is connected to
@@ -274,7 +274,7 @@ class Hw9Switch(app_manager.RyuApp):
                         parents[v] = (u, ports)
 
             path = self.generate_path_steps(src_dpid, src_port, dst_dpid, dst_port, parents)
-            self.logger.info('Path found: {}'.format(path))
+            # self.logger.info('Path found: {}'.format(path))
 
         return path
 
@@ -326,13 +326,13 @@ class Hw9Switch(app_manager.RyuApp):
         # until the end-host sends a packet
         src_dpid = dp.id
         src_port = msg.in_port
-        self.logger.info('mac2port: {}'.format(self.mac_to_swport))
+        # self.logger.info('mac2port: {}'.format(self.mac_to_swport))
         if src not in self.mac_to_swport:
             self.mac_to_swport[src] = (src_dpid, src_port)
 
         # DEBUG
-        self.logger.info("packet in %s %s %s %s",
-                         src_dpid, src, dst, msg.in_port)
+        # self.logger.info("packet in %s %s %s %s",
+        #                  src_dpid, src, dst, msg.in_port)
 
         # Fall back on STP Broadcast if we have not seen the destination yet
         if dst not in self.mac_to_swport:
