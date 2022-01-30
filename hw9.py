@@ -138,7 +138,7 @@ class Hw9Switch(app_manager.RyuApp):
                 if visited[i[0]] == False:
                     queue.append(i[0])
                     in_use_ports[s].add(i[1]['src_port'])
-                    in_use_ports[i[0]].add(s[1]['dst_port'])
+                    in_use_ports[i[0]].add(i[1]['dst_port'])
                     # in_use_ports = self.update_in_use_ports(i[0], s, in_use_ports, links)
                     visited[i[0]] = True
     
