@@ -85,15 +85,11 @@ class Hw9Switch(app_manager.RyuApp):
         dp.send_msg(out)
 
     def get_topology_data(self):
-        #self.logger.info('tag1')
         switch_list = get_switch(self, None)
-        #self.logger.info('tag2')
         # XXX: Useful for getting familiar with the data structures
         # self.logger.info(switch_list[0].to_dict())
         switches = [switch.dp.id for switch in switch_list]
-        #self.logger.info('tag3')
         link_list = get_link(self, None)
-        #self.logger.info('tag4')
         links = [(link.src.dpid, link.dst.dpid, {
                   'port': link.src.port_no}) for link in link_list]
 
@@ -109,22 +105,12 @@ class Hw9Switch(app_manager.RyuApp):
         graph = self.get_topology_data()
         switch_list, edge_list = graph
         
-        # ADDED
+        # create graph data structures for BFS
         switches = [switch.dp.id for switch in switch_list]
-        # links = [(link.src.dpid, link.dst.dpid, {
-        #           'port': link.src.port_no}) for link in edge_list]
-        # self.logger.info('graph: {}'.format(graph))
-
-        # BFS
-        # adj_list = {i:[] for i in switches}
-        # for edge in links:
-        #     adj_list[edge[0]].append(edge[1:])
-
         if self.adj_list == None:
             self.adj_list = self.generate_graph_adj_list()
 
-
-        # now adj_list is ready
+        # BFS
         visited = [False] * (max(self.adj_list) + 1)
         queue = []
         queue.append(switches[0])
@@ -139,21 +125,11 @@ class Hw9Switch(app_manager.RyuApp):
                     queue.append(i[0])
                     in_use_ports[s].add(i[1]['src_port'])
                     in_use_ports[i[0]].add(i[1]['dst_port'])
-                    # in_use_ports = self.update_in_use_ports(i[0], s, in_use_ports, links)
                     visited[i[0]] = True
-    
-        #self.logger.info('in use ports:\n {}'.format(in_use_ports))
         # BFS 
        
         # Save the spanning tree for use with all future broadcasts
         self.spanning_tree = in_use_ports
-
-    # def update_in_use_ports(self, src, dst, in_use_ports, links):
-    #     for link in links:
-    #         if (link[0], link[1]) == (src, dst):
-    #             in_use_ports[src].add(link[2]['port'])
-    #             break
-    #     return in_use_ports
         
     def get_all_ports(self, dpid):
        
@@ -189,23 +165,15 @@ class Hw9Switch(app_manager.RyuApp):
         # includes the switch's local port, the input port, and any port that
         # is not in the spanning tree on the appropriate ports
         always_skip_ports = [msg.in_port, ofp.OFPP_LOCAL]
-        #self.logger.info('always_skip_ports: {}'.format(always_skip_ports))
-        #
-        # HW9TODO: Add in the ports that are not in the spanning tree for this
-        # switch
-        #
-        #self.logger.info('I\'m switch{}'.format(dp.id))
-        #all_ports = self.get_all_ports(dp.id)
 
         if dp.id not in self.all_ports:
             self.all_ports[dp.id] = self.get_all_ports(dp.id)
 
-        
         spanning_tree_skip_ports = self.all_ports[dp.id] - self.spanning_tree[dp.id]
         skip_port_set = set(always_skip_ports).union(spanning_tree_skip_ports)
-        
-        #self.logger.info('spanning tree skipped ports for switch{} is {}'.format(dp.id, spanning_tree_skip_ports))
-        self.logger.info('skip port set for switch{} is {}'.format(dp.id, skip_port_set))
+        # self.logger.info('spanning tree skipped ports for switch{} is {}'.format(dp.id, spanning_tree_skip_ports))
+        # self.logger.info('skip port set for switch{} is {}'.format(dp.id, skip_port_set))
+
         # For every port not being skipped, send the packet out that port.
         # Note: it is crucially important to flood out the ports that an
         # end-host is connected to
@@ -330,7 +298,8 @@ class Hw9Switch(app_manager.RyuApp):
         # until the end-host sends a packet
         src_dpid = dp.id
         src_port = msg.in_port
-        # self.logger.info('mac2port: {}'.format(self.mac_to_swport))
+        
+        # added condition
         if src not in self.mac_to_swport:
             self.mac_to_swport[src] = (src_dpid, src_port)
 
