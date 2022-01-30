@@ -111,31 +111,35 @@ class Hw9Switch(app_manager.RyuApp):
         
         # ADDED
         switches = [switch.dp.id for switch in switch_list]
-        links = [(link.src.dpid, link.dst.dpid, {
-                  'port': link.src.port_no}) for link in edge_list]
+        # links = [(link.src.dpid, link.dst.dpid, {
+        #           'port': link.src.port_no}) for link in edge_list]
         # self.logger.info('graph: {}'.format(graph))
 
         # BFS
-        adj_list = {i:[] for i in switches}
-        in_use_ports = {i:set() for i in switches}
-        for edge in links:
-            adj_list[edge[0]].append(edge[1:])
+        # adj_list = {i:[] for i in switches}
+        # for edge in links:
+        #     adj_list[edge[0]].append(edge[1:])
+
+        if self.adj_list == None:
+            self.adj_list = self.generate_graph_adj_list()
 
 
         # now adj_list is ready
-        visited = [False] * (max(adj_list) + 1)
+        visited = [False] * (max(self.adj_list) + 1)
         queue = []
         queue.append(switches[0])
         visited[switches[0]] = True
 
+        in_use_ports = {i:set() for i in switches}
         while queue:
             s = queue.pop(0)
 
-            for i in adj_list[s]:
+            for i in self.adj_list[s]:
                 if visited[i[0]] == False:
                     queue.append(i[0])
-                    in_use_ports[s].add(i[1]['port'])
-                    in_use_ports = self.update_in_use_ports(i[0], s, in_use_ports, links)
+                    in_use_ports[s].add(i[1]['src_port'])
+                    in_use_ports[i[0]].add(s[1]['dst_port'])
+                    # in_use_ports = self.update_in_use_ports(i[0], s, in_use_ports, links)
                     visited[i[0]] = True
     
         #self.logger.info('in use ports:\n {}'.format(in_use_ports))
@@ -144,12 +148,12 @@ class Hw9Switch(app_manager.RyuApp):
         # Save the spanning tree for use with all future broadcasts
         self.spanning_tree = in_use_ports
 
-    def update_in_use_ports(self, src, dst, in_use_ports, links):
-        for link in links:
-            if (link[0], link[1]) == (src, dst):
-                in_use_ports[src].add(link[2]['port'])
-                break
-        return in_use_ports
+    # def update_in_use_ports(self, src, dst, in_use_ports, links):
+    #     for link in links:
+    #         if (link[0], link[1]) == (src, dst):
+    #             in_use_ports[src].add(link[2]['port'])
+    #             break
+    #     return in_use_ports
         
     def get_all_ports(self, dpid):
        
@@ -201,7 +205,7 @@ class Hw9Switch(app_manager.RyuApp):
         skip_port_set = set(always_skip_ports).union(spanning_tree_skip_ports)
         
         #self.logger.info('spanning tree skipped ports for switch{} is {}'.format(dp.id, spanning_tree_skip_ports))
-        # self.logger.info('skip port set for switch{} is {}'.format(dp.id, skip_port_set))
+        self.logger.info('skip port set for switch{} is {}'.format(dp.id, skip_port_set))
         # For every port not being skipped, send the packet out that port.
         # Note: it is crucially important to flood out the ports that an
         # end-host is connected to
